@@ -70,33 +70,35 @@ export default function EditorPage() {
     try {
       const script = document.createElement("script")
       script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+      script.async = true
 
       script.onload = () => {
-        const html2pdf = (window as any).html2pdf
-        if (html2pdf) {
-          const opt = {
-            margin: 10,
-            filename: `resume-${new Date().toISOString().split("T")[0]}.pdf`,
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+        setTimeout(() => {
+          const html2pdf = (window as any).html2pdf
+          if (!html2pdf) {
+            setDownloadError("PDF library failed to initialize")
+            return
           }
-          html2pdf()
-            .set(opt)
-            .from(element)
-            .save()
-            .catch((err: any) => {
-              console.error("[v0] PDF generation error:", err)
-              setDownloadError("Failed to generate PDF. Please try again.")
-            })
-        } else {
-          setDownloadError("PDF library failed to load")
-        }
+
+          try {
+            const opt = {
+              margin: 10,
+              filename: `resume-${new Date().toISOString().split("T")[0]}.pdf`,
+              image: { type: "jpeg", quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true },
+              jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+            }
+            html2pdf().set(opt).from(element).save()
+          } catch (err) {
+            console.error("[v0] PDF generation error:", err)
+            setDownloadError("Failed to generate PDF. Please check your resume data.")
+          }
+        }, 100)
       }
 
       script.onerror = () => {
         console.error("[v0] Failed to load html2pdf library")
-        setDownloadError("Failed to load PDF library. Please try again.")
+        setDownloadError("Failed to load PDF library. Check your internet connection.")
       }
 
       document.head.appendChild(script)

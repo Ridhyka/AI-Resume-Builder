@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Loader2, Sparkles, Copy, Check, AlertCircle } from "lucide-react"
+import { Loader2, Sparkles, Copy, Check, AlertCircle, Wand2 } from "lucide-react"
 
 export default function AiCoach({ resume, setResume }: any) {
   const [jobDescription, setJobDescription] = useState("")
@@ -11,6 +11,7 @@ export default function AiCoach({ resume, setResume }: any) {
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState("")
+  const [applying, setApplying] = useState(false)
 
   const handleGetSuggestions = async () => {
     if (!jobDescription.trim()) return
@@ -57,6 +58,34 @@ export default function AiCoach({ resume, setResume }: any) {
     navigator.clipboard.writeText(suggestions)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleApplySuggestions = async () => {
+    setApplying(true)
+    try {
+      // Extract actionable suggestions from the AI response
+      const response = await fetch("/api/ai-coach/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          suggestions,
+          resume,
+          jobDescription,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.updatedResume) {
+        setResume(data.updatedResume)
+        setSuggestions("")
+        setJobDescription("")
+      }
+    } catch (error) {
+      console.error("[v0] Error applying suggestions:", error)
+    } finally {
+      setApplying(false)
+    }
   }
 
   return (
@@ -121,6 +150,23 @@ export default function AiCoach({ resume, setResume }: any) {
               </button>
             </div>
             <div className="text-sm text-slate-700 whitespace-pre-wrap max-h-64 overflow-y-auto">{suggestions}</div>
+            <Button
+              onClick={handleApplySuggestions}
+              disabled={applying}
+              className="w-full bg-green-500 hover:bg-green-600 text-white mt-3"
+            >
+              {applying ? (
+                <>
+                  <Loader2 size={16} className="mr-2 animate-spin" />
+                  Applying...
+                </>
+              ) : (
+                <>
+                  <Wand2 size={16} className="mr-2" />
+                  Apply to Resume
+                </>
+              )}
+            </Button>
           </div>
         )}
       </div>
