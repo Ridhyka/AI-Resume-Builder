@@ -250,10 +250,18 @@ function CreativeCardTemplate({ resume, templateStyle }: any) {
   return (
     <div
       id="resume-preview"
-      className="bg-gradient-to-br from-purple-50 to-white rounded-lg shadow-lg print:shadow-none p-8 space-y-6"
+      className="rounded-lg shadow-lg print:shadow-none p-8 space-y-6"
+      style={{
+        background: "linear-gradient(to bottom right, #faf5ff, #ffffff)",
+      }}
     >
       {/* Header with Gradient */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-400 text-white rounded-lg p-8 shadow-md">
+      <div
+        className="text-white rounded-lg p-8 shadow-md"
+        style={{
+          background: "linear-gradient(to right, #9333ea, #c084fc)",
+        }}
+      >
         <h1 className="text-5xl font-bold mb-2">{resume.personal.fullName}</h1>
         {resume.personal.summary && (
           <p className="text-purple-100 text-lg leading-relaxed">{resume.personal.summary}</p>
