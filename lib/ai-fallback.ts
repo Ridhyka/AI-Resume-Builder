@@ -240,11 +240,13 @@ export function analyzJobDescriptionMock(jobDescription: string, resume: any) {
 
 export function applyMockSuggestions(jobDescription: string, resume: any) {
   const analysis = analyzJobDescriptionMock(jobDescription, resume)
-  const updatedResume = { ...resume }
+  const updatedResume = JSON.parse(JSON.stringify(resume))
 
-  const currentSkills = updatedResume.skills ? updatedResume.skills.split(",").map((s: string) => s.trim()) : []
-  const newSkills = [...new Set([...currentSkills, ...analysis.extractedSkills])]
-  updatedResume.skills = newSkills.join(", ")
+  const currentSkills = Array.isArray(updatedResume.skills) ? updatedResume.skills : []
+  const newSkillsToAdd = analysis.extractedSkills.filter(
+    (skill: string) => !currentSkills.some((s: string) => s.toLowerCase() === skill.toLowerCase()),
+  )
+  updatedResume.skills = [...currentSkills, ...newSkillsToAdd]
 
   const roleDescriptions: Record<string, string> = {
     "machine learning engineer": "skilled in developing and deploying machine learning models",
@@ -261,8 +263,9 @@ export function applyMockSuggestions(jobDescription: string, resume: any) {
 
   const roleDesc = roleDescriptions[analysis.detectedRole] || "skilled software professional"
 
-  if (!updatedResume.summary || updatedResume.summary.length < 50) {
-    updatedResume.summary = `${roleDesc} with strong expertise in ${analysis.extractedSkills.slice(0, 3).join(", ")}. Passionate about solving complex problems and delivering high-quality solutions.`
+  if (!updatedResume.personal || !updatedResume.personal.summary || updatedResume.personal.summary.length < 50) {
+    updatedResume.personal = updatedResume.personal || {}
+    updatedResume.personal.summary = `${roleDesc} with strong expertise in ${analysis.extractedSkills.slice(0, 3).join(", ")}. Passionate about solving complex problems and delivering high-quality solutions.`
   }
 
   return updatedResume

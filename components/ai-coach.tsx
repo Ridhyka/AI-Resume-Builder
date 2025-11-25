@@ -63,7 +63,7 @@ export default function AiCoach({ resume, setResume }: any) {
   const handleApplySuggestions = async () => {
     setApplying(true)
     try {
-      // Extract actionable suggestions from the AI response
+      console.log("[v0] Applying suggestions...")
       const response = await fetch("/api/ai-coach/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,7 +76,13 @@ export default function AiCoach({ resume, setResume }: any) {
 
       const data = await response.json()
 
+      if (data.error) {
+        console.error("[v0] Apply error:", data.error)
+        return
+      }
+
       if (data.updatedResume) {
+        console.log("[v0] Resume updated with new skills and summary")
         setResume(data.updatedResume)
         setSuggestions("")
         setJobDescription("")
