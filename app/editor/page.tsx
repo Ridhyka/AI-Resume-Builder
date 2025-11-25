@@ -6,7 +6,7 @@ import ResumePreview from "@/components/resume-preview"
 import AiCoach from "@/components/ai-coach"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ChevronLeft, Download } from "lucide-react"
+import { ChevronLeft, Download, AlertCircle } from "lucide-react"
 
 const defaultResume = {
   personal: {
@@ -57,22 +57,52 @@ const defaultResume = {
 export default function EditorPage() {
   const [resume, setResume] = useState(defaultResume)
   const [showAiCoach, setShowAiCoach] = useState(false)
+  const [downloadError, setDownloadError] = useState("")
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
+    setDownloadError("")
     const element = document.getElementById("resume-preview")
-    if (element) {
-      // Dynamic import for client-side only
-      import("html2pdf.js").then(() => {
+    if (!element) {
+      setDownloadError("Resume preview not found")
+      return
+    }
+
+    try {
+      const script = document.createElement("script")
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+
+      script.onload = () => {
         const html2pdf = (window as any).html2pdf
-        const opt = {
-          margin: 10,
-          filename: "resume.pdf",
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+        if (html2pdf) {
+          const opt = {
+            margin: 10,
+            filename: `resume-${new Date().toISOString().split("T")[0]}.pdf`,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
+          }
+          html2pdf()
+            .set(opt)
+            .from(element)
+            .save()
+            .catch((err: any) => {
+              console.error("[v0] PDF generation error:", err)
+              setDownloadError("Failed to generate PDF. Please try again.")
+            })
+        } else {
+          setDownloadError("PDF library failed to load")
         }
-        html2pdf().set(opt).from(element).save()
-      })
+      }
+
+      script.onerror = () => {
+        console.error("[v0] Failed to load html2pdf library")
+        setDownloadError("Failed to load PDF library. Please try again.")
+      }
+
+      document.head.appendChild(script)
+    } catch (error) {
+      console.error("[v0] Download error:", error)
+      setDownloadError("An error occurred while downloading. Please try again.")
     }
   }
 
@@ -100,6 +130,12 @@ export default function EditorPage() {
             </Button>
           </div>
         </div>
+        {downloadError && (
+          <div className="px-4 sm:px-6 lg:px-8 py-2 bg-red-50 border-t border-red-200 flex items-center gap-2 text-sm text-red-700">
+            <AlertCircle size={16} />
+            {downloadError}
+          </div>
+        )}
       </header>
 
       <div className="flex gap-6 p-6 max-w-full overflow-hidden">

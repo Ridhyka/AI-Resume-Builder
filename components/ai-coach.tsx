@@ -3,18 +3,22 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Loader2, Sparkles, Copy, Check } from "lucide-react"
+import { Loader2, Sparkles, Copy, Check, AlertCircle } from "lucide-react"
 
 export default function AiCoach({ resume, setResume }: any) {
   const [jobDescription, setJobDescription] = useState("")
   const [suggestions, setSuggestions] = useState("")
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [error, setError] = useState("")
 
   const handleGetSuggestions = async () => {
     if (!jobDescription.trim()) return
 
     setLoading(true)
+    setError("")
+    setSuggestions("")
+
     try {
       const response = await fetch("/api/ai-coach", {
         method: "POST",
@@ -26,10 +30,24 @@ export default function AiCoach({ resume, setResume }: any) {
       })
 
       const data = await response.json()
-      setSuggestions(data.suggestions || "")
+
+      if (!response.ok) {
+        const errorMsg = data.error || "Failed to get suggestions"
+        console.error("[v0] AI Coach API error:", errorMsg)
+        setError(errorMsg)
+        setSuggestions("")
+      } else if (data.suggestions) {
+        setSuggestions(data.suggestions)
+        setError("")
+      } else {
+        setError("No suggestions received. Please try again.")
+        setSuggestions("")
+      }
     } catch (error) {
-      console.error("Error getting suggestions:", error)
-      setSuggestions("Failed to get suggestions. Please try again.")
+      const errorMsg = error instanceof Error ? error.message : "Failed to get suggestions"
+      console.error("[v0] AI Coach error:", errorMsg)
+      setError(errorMsg)
+      setSuggestions("")
     } finally {
       setLoading(false)
     }
@@ -75,6 +93,13 @@ export default function AiCoach({ resume, setResume }: any) {
             </>
           )}
         </Button>
+
+        {error && (
+          <div className="p-3 bg-red-50 rounded-lg border border-red-200 flex items-start gap-2">
+            <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
         {suggestions && (
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
