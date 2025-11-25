@@ -1,5 +1,4 @@
 import { generateText } from "ai"
-import { google } from "@ai-sdk/google"
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +8,9 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing job description or resume" }, { status: 400 })
     }
 
-    const prompt = `You are an expert resume coach. Analyze the following resume against the job description and provide specific, actionable suggestions to make the resume more aligned with the job requirements.
+    const { text } = await generateText({
+      model: "google/gemini-2.0-flash",
+      prompt: `You are an expert resume coach. Analyze the following resume against the job description and provide specific, actionable suggestions to make the resume more aligned with the job requirements.
 
 Job Description:
 ${jobDescription}
@@ -37,11 +38,7 @@ Please provide:
 3. Experience bullets that should be rewritten to match the job requirements
 4. Any ATS (Applicant Tracking System) improvements needed
 
-Format your response clearly with headers and bullet points.`
-
-    const { text } = await generateText({
-      model: google("gemini-1.5-pro"),
-      prompt,
+Format your response clearly with headers and bullet points.`,
       temperature: 0.7,
       maxTokens: 1000,
     })
