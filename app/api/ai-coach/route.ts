@@ -1,4 +1,4 @@
-import { generateText } from "ai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 export async function POST(request: Request) {
   try {
@@ -8,9 +8,15 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing job description or resume" }, { status: 400 })
     }
 
-    const { text } = await generateText({
-      model: "google/gemini-2.0-flash",
-      prompt: `You are an expert resume coach. Analyze the following resume against the job description and provide specific, actionable suggestions to make the resume more aligned with the job requirements.
+    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    if (!apiKey) {
+      return Response.json({ error: "API key not configured" }, { status: 500 })
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+
+    const prompt = `You are an expert resume coach. Analyze the following resume against the job description and provide specific, actionable suggestions to make the resume more aligned with the job requirements.
 
 Job Description:
 ${jobDescription}
@@ -38,10 +44,10 @@ Please provide:
 3. Experience bullets that should be rewritten to match the job requirements
 4. Any ATS (Applicant Tracking System) improvements needed
 
-Format your response clearly with headers and bullet points.`,
-      temperature: 0.7,
-      maxTokens: 1000,
-    })
+Format your response clearly with headers and bullet points.`
+
+    const result = await model.generateContent(prompt)
+    const text = result.response.text()
 
     return Response.json({ suggestions: text })
   } catch (error) {
