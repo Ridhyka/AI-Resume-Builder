@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { analyzJobDescriptionMock } from "@/lib/ai-fallback"
 
 export async function POST(request: Request) {
   try {
@@ -9,14 +9,18 @@ export async function POST(request: Request) {
     }
 
     const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY
+
     if (!apiKey) {
-      return Response.json({ error: "API key not configured" }, { status: 500 })
+      const { suggestions } = analyzJobDescriptionMock(jobDescription, resume)
+      return Response.json({ suggestions, isMock: true })
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+    try {
+      const { GoogleGenerativeAI } = await import("@google/generative-ai")
+      const genAI = new GoogleGenerativeAI(apiKey)
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
-    const prompt = `You are an expert resume coach. Analyze the following resume against the job description and provide specific, actionable suggestions to make the resume more aligned with the job requirements.
+      const prompt = `You are an expert resume coach. Analyze the following resume against the job description and provide specific, actionable suggestions to make the resume more aligned with the job requirements.
 
 Job Description:
 ${jobDescription}
@@ -46,10 +50,15 @@ Please provide:
 
 Format your response clearly with headers and bullet points.`
 
-    const result = await model.generateContent(prompt)
-    const text = result.response.text()
+      const result = await model.generateContent(prompt)
+      const text = result.response.text()
 
-    return Response.json({ suggestions: text })
+      return Response.json({ suggestions: text, isMock: false })
+    } catch (apiError) {
+      console.error("[v0] Gemini API failed, using fallback:", apiError)
+      const { suggestions } = analyzJobDescriptionMock(jobDescription, resume)
+      return Response.json({ suggestions, isMock: true })
+    }
   } catch (error) {
     console.error("[v0] AI Coach error:", error)
     const errorMessage = error instanceof Error ? error.message : "Failed to generate suggestions"

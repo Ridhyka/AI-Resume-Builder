@@ -1,5 +1,4 @@
-import { generateText } from "ai"
-import { google } from "@ai-sdk/google"
+import { applyMockSuggestions } from "@/lib/ai-fallback"
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +8,11 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing suggestions or resume" }, { status: 400 })
     }
 
-    const prompt = `Based on these AI suggestions for a resume, extract specific improvements and apply them to the resume data.
+    try {
+      const { generateText } = await import("ai")
+      const { google } = await import("@ai-sdk/google")
+
+      const prompt = `Based on these AI suggestions for a resume, extract specific improvements and apply them to the resume data.
 
 Suggestions:
 ${suggestions}
@@ -36,53 +39,54 @@ Return ONLY a valid JSON object with this structure (no markdown, no code blocks
 
 Make sure the JSON is valid and parseable.`
 
-    const { text } = await generateText({
-      model: google("gemini-1.5-pro"),
-      prompt,
-      temperature: 0.7,
-      maxTokens: 1500,
-    })
-
-    // Parse the JSON response
-    let updates
-    try {
-      // Clean the response in case there's markdown formatting
-      const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim()
-      updates = JSON.parse(cleanedText)
-    } catch (parseError) {
-      console.error("[v0] Failed to parse AI response:", text)
-      return Response.json({ error: "Failed to parse suggestions" }, { status: 400 })
-    }
-
-    // Apply updates to resume
-    const updatedResume = { ...resume }
-
-    // Add new skills
-    if (updates.skillsToAdd && Array.isArray(updates.skillsToAdd)) {
-      updatedResume.skills = [
-        ...new Set([
-          ...updatedResume.skills,
-          ...updates.skillsToAdd.filter((s: string) => s && !updatedResume.skills.includes(s)),
-        ]),
-      ]
-    }
-
-    // Update summary
-    if (updates.updatedSummary) {
-      updatedResume.personal.summary = updates.updatedSummary
-    }
-
-    // Update experience descriptions
-    if (updates.experienceUpdates && Array.isArray(updates.experienceUpdates)) {
-      updates.experienceUpdates.forEach((update: any) => {
-        const expIndex = updatedResume.experience.findIndex((e: any) => e.id === update.id)
-        if (expIndex !== -1 && update.newDescription) {
-          updatedResume.experience[expIndex].description = update.newDescription
-        }
+      const { text } = await generateText({
+        model: google("gemini-1.5-pro"),
+        prompt,
+        temperature: 0.7,
+        maxTokens: 1500,
       })
-    }
 
-    return Response.json({ updatedResume })
+      // Parse the JSON response
+      let updates
+      try {
+        const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim()
+        updates = JSON.parse(cleanedText)
+      } catch (parseError) {
+        console.error("[v0] Failed to parse AI response:", text)
+        throw new Error("Failed to parse AI response")
+      }
+
+      // Apply updates to resume
+      const updatedResume = { ...resume }
+
+      if (updates.skillsToAdd && Array.isArray(updates.skillsToAdd)) {
+        updatedResume.skills = [
+          ...new Set([
+            ...updatedResume.skills,
+            ...updates.skillsToAdd.filter((s: string) => s && !updatedResume.skills.includes(s)),
+          ]),
+        ]
+      }
+
+      if (updates.updatedSummary) {
+        updatedResume.personal.summary = updates.updatedSummary
+      }
+
+      if (updates.experienceUpdates && Array.isArray(updates.experienceUpdates)) {
+        updates.experienceUpdates.forEach((update: any) => {
+          const expIndex = updatedResume.experience.findIndex((e: any) => e.id === update.id)
+          if (expIndex !== -1 && update.newDescription) {
+            updatedResume.experience[expIndex].description = update.newDescription
+          }
+        })
+      }
+
+      return Response.json({ updatedResume })
+    } catch (apiError) {
+      console.error("[v0] AI apply failed, using fallback:", apiError)
+      const updatedResume = applyMockSuggestions(jobDescription, resume)
+      return Response.json({ updatedResume })
+    }
   } catch (error) {
     console.error("[v0] Apply suggestions error:", error)
     const errorMessage = error instanceof Error ? error.message : "Failed to apply suggestions"
