@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import ResumeForm from "@/components/resume-form"
 import ResumePreview from "@/components/resume-preview"
 import AiCoach from "@/components/ai-coach"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ChevronLeft, Download, AlertCircle } from "lucide-react"
+import { type Template, getTemplateStyles } from "@/lib/resume-templates"
 
 const defaultResume = {
   personal: {
@@ -55,6 +57,10 @@ const defaultResume = {
 }
 
 export default function EditorPage() {
+  const searchParams = useSearchParams()
+  const template = (searchParams.get("template") as Template) || "modern"
+  const templateStyles = getTemplateStyles(template)
+
   const [resume, setResume] = useState(defaultResume)
   const [showAiCoach, setShowAiCoach] = useState(false)
   const [downloadError, setDownloadError] = useState("")
@@ -113,10 +119,16 @@ export default function EditorPage() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="max-w-full px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900">
-            <ChevronLeft size={20} />
-            Back
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/templates" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900">
+              <ChevronLeft size={20} />
+              Change Template
+            </Link>
+            <div className="text-sm text-slate-500">
+              Using: <span className={`font-semibold ${templateStyles.headerColor}`}>{templateStyles.name}</span>{" "}
+              template
+            </div>
+          </div>
           <h1 className="text-2xl font-bold text-slate-900">Resume Editor</h1>
           <div className="flex gap-3">
             <Button
@@ -148,7 +160,7 @@ export default function EditorPage() {
 
         {/* Right: Preview + AI Coach */}
         <div className="flex-1 min-w-0 space-y-4 overflow-y-auto max-h-[calc(100vh-120px)]">
-          <ResumePreview resume={resume} />
+          <ResumePreview resume={resume} template={template} />
           {showAiCoach && <AiCoach resume={resume} setResume={setResume} />}
         </div>
       </div>

@@ -1,14 +1,53 @@
 "use client"
 
-export default function ResumePreview({ resume }: any) {
+import { type Template, getTemplateStyles } from "@/lib/resume-templates"
+
+export default function ResumePreview({ resume, template = "modern" }: any) {
+  const templateStyle = getTemplateStyles(template as Template)
+
+  const getTemplateClasses = () => {
+    switch (template) {
+      case "classic":
+        return {
+          headerBorder: "border-blue-700",
+          headerColor: "text-blue-700",
+          sectionBorder: "border-blue-200",
+          sectionTitle: "text-blue-700",
+          accentBg: "bg-blue-50",
+          skillTag: "bg-blue-100 text-blue-700",
+        }
+      case "creative":
+        return {
+          headerBorder: "border-purple-600",
+          headerColor: "text-purple-600",
+          sectionBorder: "border-purple-200",
+          sectionTitle: "text-purple-600",
+          accentBg: "bg-purple-50",
+          skillTag: "bg-purple-100 text-purple-600",
+        }
+      case "modern":
+      default:
+        return {
+          headerBorder: "border-cyan-500",
+          headerColor: "text-cyan-600",
+          sectionBorder: "border-slate-300",
+          sectionTitle: "text-slate-900",
+          accentBg: "bg-slate-100",
+          skillTag: "bg-slate-100 text-slate-700",
+        }
+    }
+  }
+
+  const styles = getTemplateClasses()
+
   return (
     <div
       id="resume-preview"
-      className="bg-white rounded-lg border border-slate-200 shadow-lg p-12 space-y-6 print:shadow-none text-slate-900"
+      className={`bg-white rounded-lg border border-slate-200 shadow-lg p-12 space-y-6 print:shadow-none text-slate-900`}
     >
       {/* Header */}
-      <div className="border-b-2 border-cyan-500 pb-4">
-        <h1 className="text-3xl font-bold">{resume.personal.fullName}</h1>
+      <div className={`border-b-2 ${styles.headerBorder} pb-4`}>
+        <h1 className={`text-3xl font-bold ${styles.headerColor}`}>{resume.personal.fullName}</h1>
         <div className="flex flex-wrap gap-3 text-sm text-slate-600 mt-2">
           {resume.personal.email && <span>{resume.personal.email}</span>}
           {resume.personal.phone && <span>•</span>}
@@ -28,7 +67,11 @@ export default function ResumePreview({ resume }: any) {
       {/* Experience */}
       {resume.experience.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold uppercase tracking-wide mb-3 border-b border-slate-300 pb-2">Experience</h2>
+          <h2
+            className={`text-lg font-bold uppercase tracking-wide mb-3 border-b ${styles.sectionBorder} pb-2 ${styles.sectionTitle}`}
+          >
+            Experience
+          </h2>
           {resume.experience.map(
             (exp: any) =>
               exp.company && (
@@ -52,7 +95,11 @@ export default function ResumePreview({ resume }: any) {
       {/* Education */}
       {resume.education.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold uppercase tracking-wide mb-3 border-b border-slate-300 pb-2">Education</h2>
+          <h2
+            className={`text-lg font-bold uppercase tracking-wide mb-3 border-b ${styles.sectionBorder} pb-2 ${styles.sectionTitle}`}
+          >
+            Education
+          </h2>
           {resume.education.map(
             (edu: any) =>
               edu.school && (
@@ -74,10 +121,14 @@ export default function ResumePreview({ resume }: any) {
       {/* Skills */}
       {resume.skills.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold uppercase tracking-wide mb-3 border-b border-slate-300 pb-2">Skills</h2>
+          <h2
+            className={`text-lg font-bold uppercase tracking-wide mb-3 border-b ${styles.sectionBorder} pb-2 ${styles.sectionTitle}`}
+          >
+            Skills
+          </h2>
           <div className="flex flex-wrap gap-2">
             {resume.skills.map((skill: string, i: number) => (
-              <span key={i} className="px-3 py-1 bg-slate-100 text-slate-700 rounded text-sm">
+              <span key={i} className={`px-3 py-1 ${styles.skillTag} rounded text-sm`}>
                 {skill}
               </span>
             ))}
@@ -88,7 +139,11 @@ export default function ResumePreview({ resume }: any) {
       {/* Projects */}
       {resume.projects.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold uppercase tracking-wide mb-3 border-b border-slate-300 pb-2">Projects</h2>
+          <h2
+            className={`text-lg font-bold uppercase tracking-wide mb-3 border-b ${styles.sectionBorder} pb-2 ${styles.sectionTitle}`}
+          >
+            Projects
+          </h2>
           {resume.projects.map(
             (proj: any) =>
               proj.name && (
@@ -100,7 +155,7 @@ export default function ResumePreview({ resume }: any) {
                         href={proj.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-cyan-600 text-sm hover:underline"
+                        className={`${styles.headerColor} text-sm hover:underline`}
                       >
                         Link
                       </a>
@@ -116,7 +171,9 @@ export default function ResumePreview({ resume }: any) {
       {/* Certifications */}
       {resume.certifications.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold uppercase tracking-wide mb-3 border-b border-slate-300 pb-2">
+          <h2
+            className={`text-lg font-bold uppercase tracking-wide mb-3 border-b ${styles.sectionBorder} pb-2 ${styles.sectionTitle}`}
+          >
             Certifications
           </h2>
           {resume.certifications.map(
