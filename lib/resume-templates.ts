@@ -4,29 +4,32 @@ export const templates = {
   modern: {
     id: "modern",
     name: "Modern",
-    description: "Clean, contemporary design with a focus on readability",
-    preview: "Minimalist layout with cyan accents and modern typography",
+    description: "Clean, contemporary design with sidebar layout",
+    preview: "Minimalist 2-column with cyan accents and modern typography",
     headerColor: "text-cyan-600",
     accentColor: "bg-cyan-50",
     borderColor: "border-cyan-200",
+    layout: "sidebar", // added layout type for different rendering
   },
   classic: {
     id: "classic",
     name: "Classic",
-    description: "Professional, timeless design that never goes out of style",
-    preview: "Traditional layout with blue accents and professional formatting",
-    headerColor: "text-blue-700",
-    accentColor: "bg-blue-50",
-    borderColor: "border-blue-200",
+    description: "Traditional ATS-friendly professional design",
+    preview: "Single column with serif fonts and formal styling",
+    headerColor: "text-slate-900",
+    accentColor: "bg-slate-100",
+    borderColor: "border-slate-400",
+    layout: "traditional", // added layout type for different rendering
   },
   creative: {
     id: "creative",
     name: "Creative",
-    description: "Bold design with visual hierarchy for creative professionals",
-    preview: "Eye-catching layout with purple accents and modern styling",
+    description: "Colorful card-based design for creative professionals",
+    preview: "Vibrant cards with gradients and bold accents",
     headerColor: "text-purple-600",
     accentColor: "bg-purple-50",
-    borderColor: "border-purple-200",
+    borderColor: "border-purple-300",
+    layout: "card", // added layout type for different rendering
   },
 }
 
